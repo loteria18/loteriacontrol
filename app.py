@@ -87,7 +87,7 @@ with tab2:
   bt_guardar = st.button("🔥 Confirmar y Entregar al Agente")
 
   if bt_guardar:
-  if len(numero_lot) != 5 or not numero_lot.isdigit():
+    if len(numero_lot) != 5 or not numero_lot.isdigit():
       st.error("Por favor, asegúrate de que el número tiene 5 cifras.")
     else:
       total_euros = cant_decimos * PRECIO_DECIMO
