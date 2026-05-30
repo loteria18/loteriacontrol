@@ -78,40 +78,40 @@ st.markdown("### Confirmar Datos de la Entrega")
 
   col1, col2, col3 = st.columns(3)
   with col1:
-numero_lot = st.text_input("Número (5 cifras)", max_chars=5, value=num_detectado)
-with col2:
-serie_lot = st.number_input("Serie", min_value=1, value=serie_detectada)
-with col3:
-cant_decimos = st.number_input("Cantidad de décimos", min_value=1, value=1)
+    numero_lot = st.text_input("Número (5 cifras)", max_chars=5, value=num_detectado)
+  with col2:
+    serie_lot = st.number_input("Serie", min_value=1, value=serie_detectada)
+  with col3:
+    cant_decimos = st.number_input("Cantidad de décimos", min_value=1, value=1)
 
-bt_guardar = st.button("🔥 Confirmar y Entregar al Agente")
+  bt_guardar = st.button("🔥 Confirmar y Entregar al Agente")
 
-if bt_guardar:
-if len(numero_lot) != 5 or not numero_lot.isdigit():
-st.error("Por favor, asegúrate de que el número tiene 5 cifras.")
-else:
-total_euros = cant_decimos * PRECIO_DECIMO
-nueva_entrega = {
-"Agente": agente_sel,
-"Número": numero_lot,
-"Serie": serie_lot,
-"Cantidad Décimos": cant_decimos,
-"Total Euros": total_euros,
-"Estado": "Pendiente"
-}
-st.session_state.entregas = pd.concat([st.session_state.entregas, pd.DataFrame([nueva_entrega])], ignore_index=True)
-st.success(f"¡Asignado! El Agente {agente_sel} ha recibido {cant_decimos} décimo(s) del número {numero_lot} (Serie {serie_lot}). Total deuda: +{total_euros}€")
+  if bt_guardar:
+  if len(numero_lot) != 5 or not numero_lot.isdigit():
+      st.error("Por favor, asegúrate de que el número tiene 5 cifras.")
+    else:
+      total_euros = cant_decimos * PRECIO_DECIMO
+      nueva_entrega = {
+        "Agente": agente_sel,
+        "Número": numero_lot,
+        "Serie": serie_lot,
+        "Cantidad Décimos": cant_decimos,
+        "Total Euros": total_euros,
+        "Estado": "Pendiente"
+      }
+      st.session_state.entregas = pd.concat([st.session_state.entregas, pd.DataFrame([nueva_entrega])], ignore_index=True)
+      st.success(f"¡Asignado! El Agente {agente_sel} ha recibido {cant_decimos} décimo(s) del número {numero_lot} (Serie {serie_lot}). Total deuda: +{total_euros}€")
 
-# --- PESTAÑA 3: GESTIONAR AGENTES ---
+      # --- PESTAÑA 3: GESTIONAR AGENTES ---
 with tab3:
-st.subheader("Tus Vendedores / Agentes")
-nuevo_agente = st.text_input("Nombre del nuevo agente")
-if st.button("Añadir Agente"):
-if nuevo_agente and nuevo_agente not in st.session_state.agentes:
-st.session_state.agentes.append(nuevo_agente)
-st.success(f"Agente '{nuevo_agente}' añadido con éxito.")
-else:
-st.error("El nombre no es válido o ya existe.")
+  st.subheader("Tus Vendedores / Agentes")
+  nuevo_agente = st.text_input("Nombre del nuevo agente")
+  if st.button("Añadir Agente"):
+    if nuevo_agente and nuevo_agente not in st.session_state.agentes:
+      st.session_state.agentes.append(nuevo_agente)
+      st.success(f"Agente '{nuevo_agente}' añadido con éxito.")
+      else:
+      st.error("El nombre no es válido o ya existe.")
 
-st.write("Agentes actuales:", st.session_state.agentes)
+  st.write("Agentes actuales:", st.session_state.agentes)
 
