@@ -23,16 +23,16 @@ PRECIO_DECIMO = 20.0
 # --- PESTAÑA 1: SALDOS Y DEUDAS ---
 with tab1:
 st.subheader("Estado de Cuentas de los Agentes")
-if st.session_state.entregas.empty:
-st.info("No hay lotería entregada todavía.")
+  if st.session_state.entregas.empty:
+    st.info("No hay lotería entregada todavía.")
 else:
-df_pendientes = st.session_state.entregas[st.session_state.entregas["Estado"] == "Pendiente"]
-if not df_pendientes.empty:
-resumen_deudas = df_pendientes.groupby("Agente")["Total Euros"].sum().reset_index()
-resumen_deudas.columns = ["Agente", "Total Deuda (€)"]
-st.dataframe(resumen_deudas, use_container_width=True)
-else:
-st.success("🎉 ¡Todos los agentes están al día!")
+    df_pendientes = st.session_state.entregas[st.session_state.entregas["Estado"] == "Pendiente"]
+    if not df_pendientes.empty:
+      resumen_deudas = df_pendientes.groupby("Agente")["Total Euros"].sum().reset_index()
+      resumen_deudas.columns = ["Agente", "Total Deuda (€)"]
+      st.dataframe(resumen_deudas, use_container_width=True)
+    else:
+      st.success("🎉 ¡Todos los agentes están al día!")
 
 st.markdown("---")
 st.subheader("Detalle de Décimos Entregados")
@@ -40,44 +40,44 @@ st.dataframe(st.session_state.entregas, use_container_width=True)
 
 # --- PESTAÑA 2: ENTREGAR LOTERÍA ---
 with tab2:
-st.subheader("Registrar Nueva Entrega")
+  st.subheader("Registrar Nueva Entrega")
 
-agente_sel = st.selectbox("Selecciona el Agente", st.session_state.agentes)
+  agente_sel = st.selectbox("Selecciona el Agente", st.session_state.agentes)
 
-metodo = st.radio(
-"¿Cómo quieres introducir los datos del décimo?",
-["Lector de Barras Físico / Manual", "Cámara del Móvil (Escanear Código)"],
-horizontal=True
-)
+  metodo = st.radio(
+    "¿Cómo quieres introducir los datos del décimo?",
+    ["Lector de Barras Físico / Manual", "Cámara del Móvil (Escanear Código)"],
+    horizontal=True
+  )
 
-num_detectado = ""
-serie_detectada = 1
+  num_detectado = ""
+  serie_detectada = 1
 
-if metodo == "Lector de Barras Físico / Manual":
-st.info("👉 Haz clic en el cuadro de abajo y dispara con tu lector de barras, o escribe a mano.")
-codigo_pistola = st.text_input("Código escaneado (o introduce datos abajo):", key="pistola")
+  if metodo == "Lector de Barras Físico / Manual":
+    st.info("👉 Haz clic en el cuadro de abajo y dispara con tu lector de barras, o escribe a mano.")
+    codigo_pistola = st.text_input("Código escaneado (o introduce datos abajo):", key="pistola")
 
-if len(codigo_pistola) >= 5:
-num_detectado = codigo_pistola[:5]
-if len(codigo_pistola) >= 8:
-try: serie_detectada = int(codigo_pistola[5:8])
-except: pass
+    if len(codigo_pistola) >= 5:
+      num_detectado = codigo_pistola[:5]
+    if len(codigo_pistola) >= 8:
+      try: serie_detectada = int(codigo_pistola[5:8])
+      except: pass
 
-elif metodo == "Cámara del Móvil (Escanear Código)":
-st.warning("📸 Al hacer la foto, asegúrate de que el código de barras o Datamatrix del décimo se vea nítido y bien iluminado.")
-img_archivo = st.camera_input("Enfoca el décimo")
+  elif metodo == "Cámara del Móvil (Escanear Código)":
+    st.warning("📸 Al hacer la foto, asegúrate de que el código de barras o Datamatrix del décimo se vea nítido y bien iluminado.")
+    img_archivo = st.camera_input("Enfoca el décimo")
 
-if img_archivo is not None:
-with st.spinner("Leyendo código de barras..."):
-time.sleep(1)
-num_detectado = "77234"
-serie_detectada = 12
-st.success(f"✅ ¡Código detectado con éxito a través de la cámara!")
+    if img_archivo is not None:
+      with st.spinner("Leyendo código de barras..."):
+        time.sleep(1)
+        num_detectado = "77234"
+        serie_detectada = 12
+        st.success(f"✅ ¡Código detectado con éxito a través de la cámara!")
 
 st.markdown("### Confirmar Datos de la Entrega")
 
-col1, col2, col3 = st.columns(3)
-with col1:
+  col1, col2, col3 = st.columns(3)
+  with col1:
 numero_lot = st.text_input("Número (5 cifras)", max_chars=5, value=num_detectado)
 with col2:
 serie_lot = st.number_input("Serie", min_value=1, value=serie_detectada)
