@@ -23,7 +23,7 @@ PRECIO_DECIMO = 20.0
 # --- PESTAÑA 1: SALDOS Y DEUDAS ---
 with tab1:
   st.subheader("Estado de Cuentas de los Agentes")
-    if st.session_state.entregas.empty:
+  if st.session_state.entregas.empty:
         st.info("No hay lotería entregada todavía.")
 else:
     df_pendientes = st.session_state.entregas[st.session_state.entregas["Estado"] == "Pendiente"]
