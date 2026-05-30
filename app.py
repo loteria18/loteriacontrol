@@ -76,7 +76,7 @@ with tab2:
 
 st.markdown("### Confirmar Datos de la Entrega")
 
-  col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3)
   with col1:
     numero_lot = st.text_input("Número (5 cifras)", max_chars=5, value=num_detectado)
   with col2:
