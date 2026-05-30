@@ -8,12 +8,12 @@ st.title("🎰 Gestión de Agentes y Décimos (Con Escáner)")
 
 # Simulación de Base de Datos (en memoria)
 if 'agentes' not in st.session_state:
-st.session_state.agentes = ["Juan Pérez", "María Gómez", "Luis Martínez"]
+  st.session_state.agentes = ["Juan Pérez", "María Gómez", "Luis Martínez"]
 
 if 'entregas' not in st.session_state:
-st.session_state.entregas = pd.DataFrame(columns=[
+  st.session_state.entregas = pd.DataFrame(columns=[
 "Agente", "Número", "Serie", "Cantidad Décimos", "Total Euros", "Estado"
-])
+  ])
 
 # Pestañas de la aplicación
 tab1, tab2, tab3 = st.tabs(["📊 Saldos y Deudas", "📦 Entregar Lotería", "👥 Gestionar Agentes"])
