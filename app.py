@@ -25,7 +25,7 @@ with tab1:
   st.subheader("Estado de Cuentas de los Agentes")
   if st.session_state.entregas.empty:
         st.info("No hay lotería entregada todavía.")
-else:
+  else:
     df_pendientes = st.session_state.entregas[st.session_state.entregas["Estado"] == "Pendiente"]
     if not df_pendientes.empty:
       resumen_deudas = df_pendientes.groupby("Agente")["Total Euros"].sum().reset_index()
