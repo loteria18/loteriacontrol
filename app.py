@@ -110,7 +110,7 @@ with tab3:
     if nuevo_agente and nuevo_agente not in st.session_state.agentes:
       st.session_state.agentes.append(nuevo_agente)
       st.success(f"Agente '{nuevo_agente}' añadido con éxito.")
-      else:
+    else:
       st.error("El nombre no es válido o ya existe.")
 
   st.write("Agentes actuales:", st.session_state.agentes)
