@@ -74,7 +74,7 @@ with tab2:
         serie_detectada = 12
         st.success(f"✅ ¡Código detectado con éxito a través de la cámara!")
 
-st.markdown("### Confirmar Datos de la Entrega")
+  st.markdown("### Confirmar Datos de la Entrega")
 
   col1, col2, col3 = st.columns(3)
   with col1:
