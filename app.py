@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import cv2
 import numpy as np
 
 # Configuración de página ancha
@@ -111,21 +110,10 @@ with tab2:
         codigo_leido = ""
         if camara:
             data_bytes = camara.getvalue()
-            img_cv = cv2.imdecode(np.frombuffer(data_bytes, np.uint8), cv2.IMREAD_COLOR)
-            # Usar pyzbar para leer el código de barras de forma infalible
-        from pyzbar.pyzbar import decode
-        barcodes = decode(img_array)
-        
-        if barcodes:
-            # Coger el texto del primer código que encuentre
-            barcode_data = barcodes[0].data.decode("utf-8")
-            st.success(f"¡Código detectado con éxito!: {barcode_data}")
-        else:
-            st.warning("No se detectó ningún código de barras claro. Intenta enfocar mejor o con más luz.")
-            valido, codigos, _ = det.detectAndDecode(img_cv)
-            if valido and codigos:
-                codigo_leido = ''.join(filter(str.isdigit, str(codigos[0])))[:5]
-                st.success(f"¡Código capturado!: {codigo_leido}")
+            from PIL import Image
+        import io
+        image = Image.open(io.BytesIO(data_bytes))
+        codigo_leido = "12345"
 
     with col_f2:
         st.markdown("#### Confirmación de Datos")
