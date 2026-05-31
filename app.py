@@ -109,15 +109,15 @@ with tab2:
         
         codigo_leido = ""
         if camara:
-        import io
-        import pandas as pd
+            import io
+            import pandas as pd
         
-        # Leer la foto
-        data_bytes = camara.getvalue()
+            # Leer la foto
+            data_bytes = camara.getvalue()
         
-        # Sistema de lectura directa por patrones de texto simples
-        # (Si el servidor no procesa la imagen, dejamos que el usuario lo escriba)
-        st.info("Foto recibida. Si el número no se autorrellena abajo, puedes escribirlo manualmente.")
+            # Sistema de lectura directa por patrones de texto simples
+            # (Si el servidor no procesa la imagen, dejamos que el usuario lo escriba)
+            st.info("Foto recibida. Si el número no se autorrellena abajo, puedes escribirlo manualmente.")
         codigo_leido = ""
 
     with col_f2:
