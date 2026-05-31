@@ -1,4 +1,2 @@
 streamlit
 pandas
-opencv-python-headless
-pyzbar
