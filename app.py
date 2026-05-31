@@ -112,7 +112,16 @@ with tab2:
         if camara:
             data_bytes = camara.getvalue()
             img_cv = cv2.imdecode(np.frombuffer(data_bytes, np.uint8), cv2.IMREAD_COLOR)
-            det = cv2.Barcode.BarcodeDetector()
+            # Usar pyzbar para leer el código de barras de forma infalible
+        from pyzbar.pyzbar import decode
+        barcodes = decode(img_array)
+        
+        if barcodes:
+            # Coger el texto del primer código que encuentre
+            barcode_data = barcodes[0].data.decode("utf-8")
+            st.success(f"¡Código detectado con éxito!: {barcode_data}")
+        else:
+            st.warning("No se detectó ningún código de barras claro. Intenta enfocar mejor o con más luz.")
             valido, codigos, _ = det.detectAndDecode(img_cv)
             if valido and codigos:
                 codigo_leido = ''.join(filter(str.isdigit, str(codigos[0])))[:5]
