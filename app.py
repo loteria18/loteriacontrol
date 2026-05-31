@@ -8,7 +8,7 @@ import numpy as np
 st.set_page_config(page_title="Control de Lotería PRO", layout="wide")
 
 # Enlace directo a tu Google Sheets
-SHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1nfwLQGRcK6DfarVHWmdbfsYlNXf5yO4qdDS5kbrLDRY/gviz/tq?tqx=out:csv&sheet="
+SHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1nfwLQGRcK6DfarVHWmdbfsYINXf5yO4qDS5kBrkLDRY/export?format=csv&sheet="
 
 
 # --- CARGA DE DATOS TOTALMENTE PLANA (ANTI-ESPACIOS) ---
