@@ -112,7 +112,7 @@ with tab2:
         if camara:
             data_bytes = camara.getvalue()
             img_cv = cv2.imdecode(np.frombuffer(data_bytes, np.uint8), cv2.IMREAD_COLOR)
-            det = cv2.BarcodeDetector()
+            det = cv2.Barcode.BarcodeDetector()
             valido, codigos, _ = det.detectAndDecode(img_cv)
             if valido and codigos:
                 codigo_leido = ''.join(filter(str.isdigit, str(codigos[0])))[:5]
