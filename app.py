@@ -1,117 +1,181 @@
 import streamlit as st
 import pandas as pd
-import time
+import datetime
+import cv2
+import numpy as np
 
-# Configuración de la página
-st.set_page_config(page_title="Control de Lotería PRO", page_icon="🎰", layout="wide")
-st.title("🎰 Gestión de Agentes y Décimos (Con Escáner)")
+# Configuración de página ancha para mejor visualización de tablas
+st.set_page_config(page_title="Control de Lotería PRO", layout="wide")
 
-# Simulación de Base de Datos (en memoria)
-if 'agentes' not in st.session_state:
-  st.session_state.agentes = ["Juan Pérez", "María Gómez", "Luis Martínez"]
+# Enlace directo a tu Google Sheets (Formato de exportación CSV por pestaña)
+SHEET_BASE_URL = "https://docs.google.com/spreadsheets/d/1nfwLQGRcK6DfarVHWmdbfsYlNXf5yO4qdDS5kbrLDRY/gviz/tq?tqx=out:csv&sheet="
 
-if 'entregas' not in st.session_state:
-  st.session_state.entregas = pd.DataFrame(columns=[
-"Agente", "Número", "Serie", "Cantidad Décimos", "Total Euros", "Estado"
-  ])
+# Función para leer los datos de Google Sheets de forma limpia
+def cargar_hoja(nombre_pestana):
+try:
+url = f"{SHEET_BASE_URL}{nombre_pestana}"
+df = pd.read_csv(url)
+df = df.dropna(how='all')
+# Normalizar nombres de columnas a minúsculas y sin espacios raros
+df.columns = [str(c).strip().lower() for c in df.columns]
+return df
+except Exception as e:
+return pd.DataFrame()
 
-# Pestañas de la aplicación
-tab1, tab2, tab3 = st.tabs(["📊 Saldos y Deudas", "📦 Entregar Lotería", "👥 Gestionar Agentes"])
+def guardar_en_registro_local(nuevo_registro):
+if "local_entregas" not in st.session_state:
+st.session_state.local_entregas = []
+st.session_state.local_entregas.append(nuevo_registro)
 
-PRECIO_DECIMO = 20.0
+# --- CARGA DE DATOS EN VIVO ---
+df_agentes = cargar_hoja("agentes")
+df_sorteos = cargar_hoja("sorteos")
+df_entregas_base = cargar_hoja("entregas")
 
-# --- PESTAÑA 1: SALDOS Y DEUDAS ---
+if "local_entregas" not in st.session_state:
+st.session_state.local_entregas = []
+
+if not df_entregas_base.empty:
+df_dinamico = pd.DataFrame(st.session_state.local_entregas)
+if not df_dinamico.empty:
+df_entregas = pd.concat([df_entregas_base, df_dinamico], ignore_index=True)
+else:
+df_entregas = df_entregas_base
+else:
+df_entregas = pd.DataFrame(st.session_state.local_entregas)
+
+# Asegurar que las columnas mínimas existan con nombres limpios
+columnas_obligatorias = ["agente", "sorteo", "numero", "serie", "cantidad decimo", "total euros", "estado", "fecha"]
+for col in columnas_obligatorias:
+if col not in df_entregas.columns:
+# Intentar buscar variantes por si acaso
+if col == "agente" and "agentes" in df_entregas.columns:
+df_entregas = df_entregas.rename(columns={"agentes": "agente"})
+elif col == "fecha" and "fecha registro" in df_entregas.columns:
+df_entregas = df_entregas.rename(columns={"fecha registration": "fecha"})
+else:
+df_entregas[col] = None
+
+# Extraer listas de selección dinámicas desde tu Google Sheets
+lista_agentes = []
+if not df_agentes.empty:
+lista_agentes = df_agentes.iloc[:, 0].dropna().astype(str).str.strip().unique().tolist()
+if not lista_agentes:
+lista_agentes = ["Pepe", "María", "Carlos"] # Por si la hoja está vacía al inicio
+
+lista_sorteos = []
+if not df_sorteos.empty:
+lista_sorteos = df_sorteos.iloc[:, 0].dropna().astype(str).str.strip().unique().tolist()
+if not lista_sorteos:
+lista_sorteos = ["Navidad", "Sorteo del Niño", "Sorteo Especial"]
+
+# --- DISEÑO DE LA APLICACIÓN ---
+st.title("🎰 Sistema de Control de Lotería - Google Sheets")
+
+tab1, tab2, tab3 = st.tabs(["📊 Saldos y Totales", "📸 Registrar y Escanear", "👥 Configuración"])
+
+# --- PESTAÑA 1: TOTALES AUTOMÁTICOS POR SORTEO ---
 with tab1:
-  st.subheader("Estado de Cuentas de los Agentes")
-  if st.session_state.entregas.empty:
-        st.info("No hay lotería entregada todavía.")
-  else:
-    df_pendientes = st.session_state.entregas[st.session_state.entregas["Estado"] == "Pendiente"]
-    if not df_pendientes.empty:
-      resumen_deudas = df_pendientes.groupby("Agente")["Total Euros"].sum().reset_index()
-      resumen_deudas.columns = ["Agente", "Total Deuda (€)"]
-      st.dataframe(resumen_deudas, use_container_width=True)
-    else:
-      st.success("🎉 ¡Todos los agentes están al día!")
+st.subheader("Balances Generales")
+
+sorteo_sel = st.selectbox("Selecciona el Sorteo o Fecha para ver los totales:", ["Todos los Sorteos"] + lista_sorteos)
+
+df_filtrado = df_entregas.copy()
+if sorteo_sel != "Todos los Sorteos":
+df_filtrado = df_filtrado[df_filtrado["sorteo"].astype(str).str.strip() == sorteo_sel]
+
+# Cálculo de Totales en tiempo real
+if not df_filtrado.empty:
+df_filtrado["total euros"] = pd.to_numeric(df_filtrado["total euros"], errors='coerce').fillna(0)
+df_filtrado["cantidad decimo"] = pd.to_numeric(df_filtrado["cantidad decimo"], errors='coerce').fillna(0)
+
+tot_euros = df_filtrado["total euros"].sum()
+tot_decimos = df_filtrado["cantidad decimo"].sum()
+
+# Filtrar deudas (Estado Pendiente)
+df_pendientes = df_filtrado[df_filtrado["estado"].astype(str).str.lower().str.contains("pend", na=False)]
+tot_pendiente = df_pendientes["total euros"].sum()
+else:
+tot_euros = 0.0
+tot_decimos = 0
+tot_pendiente = 0.0
+
+# Tarjetas visuales de totales
+c_m1, c_m2, c_m3 = st.columns(3)
+c_m1.metric("Dinero Total Asignado", f"{tot_euros:,.2f} €")
+c_m2.metric("Décimos Totales", f"{int(tot_decimos)} uds")
+c_m3.metric("Total Pendiente de Cobro ⚠️", f"{tot_pendiente:,.2f} €")
 
 st.markdown("---")
-st.subheader("Detalle de Décimos Entregados")
-st.dataframe(st.session_state.entregas, use_container_width=True)
+st.markdown("### Resumen de Cuentas por Vendedor")
 
-# --- PESTAÑA 2: ENTREGAR LOTERÍA ---
+if not df_filtrado.empty and tot_euros > 0:
+resumen = df_filtrado.groupby("agente").agg(
+Decimos_Entregados=("cantidad decimo", "sum"),
+Total_Euros=("total euros", "sum")
+).reset_index()
+st.dataframe(resumen, use_container_width=True)
+else:
+st.info("No hay entregas registradas para la selección actual.")
+
+st.markdown("### Historial Completo de Registros")
+st.dataframe(df_entregas, use_container_width=True)
+
+
+# --- PESTAÑA 2: ESCÁNER Y REGISTRO ---
 with tab2:
-  st.subheader("Registrar Nueva Entrega")
+st.subheader("Nueva Entrega de Décimos")
 
-  agente_sel = st.selectbox("Selecciona el Agente", st.session_state.agentes)
+col_f1, col_f2 = st.columns(2)
 
-  metodo = st.radio(
-    "¿Cómo quieres introducir los datos del décimo?",
-    ["Lector de Barras Físico / Manual", "Cámara del Móvil (Escanear Código)"],
-    horizontal=True
-  )
+with col_f1:
+vendedor = st.selectbox("Selecciona el Agente Receptos:", lista_agentes)
+sorteo_act = st.selectbox("Asignar al Sorteo / Fecha:", lista_sorteos)
+precio = st.number_input("Precio de cada décimo (€):", min_value=1, value=20)
 
-  num_detectado = ""
-  serie_detectada = 1
+st.markdown("#### 📷 Escáner de Cámara Real")
+camara = st.camera_input("Enfoca el código de barras del décimo:")
 
-  if metodo == "Lector de Barras Físico / Manual":
-    st.info("👉 Haz clic en el cuadro de abajo y dispara con tu lector de barras, o escribe a mano.")
-    codigo_pistola = st.text_input("Código escaneado (o introduce datos abajo):", key="pistola")
+codigo_leido = ""
+if camara:
+data_bytes = camara.getvalue()
+img_cv = cv2.imdecode(np.frombuffer(data_bytes, np.uint8), cv2.IMREAD_COLOR)
+det = cv2.BarcodeDetector()
+valido, codigos, _ = det.detectAndDecode(img_cv)
+if valido and codigos:
+codigo_leido = ''.join(filter(str.isdigit, str(codigos[0])))[:5]
+st.success(f"¡Código capturado!: {codigo_leido}")
 
-    if len(codigo_pistola) >= 5:
-      num_detectado = codigo_pistola[:5]
-    if len(codigo_pistola) >= 8:
-      try: serie_detectada = int(codigo_pistola[5:8])
-      except: pass
+with col_f2:
+st.markdown("#### Confirmación de Datos")
+num_final = st.text_input("Número (5 cifras):", value=codigo_leido, max_chars=5)
+serie_final = st.number_input("Serie del décimo:", min_value=1, value=1)
+cantidad = st.number_input("Cantidad de décimos que entregas:", min_value=1, value=10)
 
-  elif metodo == "Cámara del Móvil (Escanear Código)":
-    st.warning("📸 Al hacer la foto, asegúrate de que el código de barras o Datamatrix del décimo se vea nítido y bien iluminado.")
-    img_archivo = st.camera_input("Enfoca el décimo")
+importe_total = cantidad * precio
+st.markdown(f"## **Importe a cobrar: {importe_total:.2f} €**")
 
-    if img_archivo is not None:
-      with st.spinner("Leyendo código de barras..."):
-        time.sleep(1)
-        num_detectado = "77234"
-        serie_detectada = 12
-        st.success(f"✅ ¡Código detectado con éxito a través de la cámara!")
+if st.button("💾 Guardar Entrega Definitiva", use_container_width=True):
+if len(num_final) != 5 or not num_final.isdigit():
+st.error("El número debe tener obligatoriamente 5 dígitos.")
+else:
+nueva_entrega = {
+"agente": vendedor,
+"sorteo": sorteo_act,
+"numero": num_final,
+"serie": int(serie_final),
+"cantidad decimo": int(cantidad),
+"total euros": float(importe_total),
+"estado": "Pendiente",
+"fecha": datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+}
+guardar_en_registro_local(nueva_entrega)
+st.success(f"¡Asignado! Guardados {cantidad} décimos a {vendedor} para el sorteo {sorteo_act}.")
 
-  st.markdown("### Confirmar Datos de la Entrega")
 
-  col1, col2, col3 = st.columns(3)
-  with col1:
-    numero_lot = st.text_input("Número (5 cifras)", max_chars=5, value=num_detectado)
-  with col2:
-    serie_lot = st.number_input("Serie", min_value=1, value=serie_detectada)
-  with col3:
-    cant_decimos = st.number_input("Cantidad de décimos", min_value=1, value=1)
-
-  bt_guardar = st.button("🔥 Confirmar y Entregar al Agente")
-
-  if bt_guardar:
-    if len(numero_lot) != 5 or not numero_lot.isdigit():
-      st.error("Por favor, asegúrate de que el número tiene 5 cifras.")
-    else:
-      total_euros = cant_decimos * PRECIO_DECIMO
-      nueva_entrega = {
-        "Agente": agente_sel,
-        "Número": numero_lot,
-        "Serie": serie_lot,
-        "Cantidad Décimos": cant_decimos,
-        "Total Euros": total_euros,
-        "Estado": "Pendiente"
-      }
-      st.session_state.entregas = pd.concat([st.session_state.entregas, pd.DataFrame([nueva_entrega])], ignore_index=True)
-      st.success(f"¡Asignado! El Agente {agente_sel} ha recibido {cant_decimos} décimo(s) del número {numero_lot} (Serie {serie_lot}). Total deuda: +{total_euros}€")
-
-      # --- PESTAÑA 3: GESTIONAR AGENTES ---
+# --- PESTAÑA 3: VERIFICACIÓN ---
 with tab3:
-  st.subheader("Tus Vendedores / Agentes")
-  nuevo_agente = st.text_input("Nombre del nuevo agente")
-  if st.button("Añadir Agente"):
-    if nuevo_agente and nuevo_agente not in st.session_state.agentes:
-      st.session_state.agentes.append(nuevo_agente)
-      st.success(f"Agente '{nuevo_agente}' añadido con éxito.")
-    else:
-      st.error("El nombre no es válido o ya existe.")
-
-  st.write("Agentes actuales:", st.session_state.agentes)
+st.subheader("Datos Base en Google Sheets")
+st.write("Vendedores detectados en el Excel:", lista_agentes)
+st.write("Sorteos/Fechas detectados en el Excel:", lista_sorteos)
 
